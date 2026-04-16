@@ -1,0 +1,446 @@
+{
+  "cells": [
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "id": "nTCOLD4gUL7u"
+      },
+      "outputs": [],
+      "source": [
+        "import torch\n",
+        "import torch.nn as nn\n",
+        "import torch.optim as optim\n",
+        "import torchvision\n",
+        "import torchvision.transforms as transforms\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 2,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "N3tUtgVrUbcM",
+        "outputId": "97135c42-e357-4757-dfaa-ca3088087031"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "100%|██████████| 182M/182M [00:16<00:00, 10.9MB/s]\n",
+            "100%|██████████| 64.3M/64.3M [00:07<00:00, 9.07MB/s]\n"
+          ]
+        }
+      ],
+      "source": [
+        "device = torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")\n",
+        "\n",
+        "transform = transforms.Compose([\n",
+        "    transforms.ToTensor(),\n",
+        "    transforms.Normalize((0.5,), (0.5,))\n",
+        "])\n",
+        "\n",
+        "trainset = torchvision.datasets.SVHN(\n",
+        "    root=\"./data\", split=\"train\", download=True, transform=transform\n",
+        ")\n",
+        "testset = torchvision.datasets.SVHN(\n",
+        "    root=\"./data\", split=\"test\", download=True, transform=transform\n",
+        ")\n",
+        "\n",
+        "trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True)\n",
+        "testloader = torch.utils.data.DataLoader(testset, batch_size=256, shuffle=False)\n",
+        "\n",
+        "\n",
+        "\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 3,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "PNBoR7FlUbgZ",
+        "outputId": "c906710d-e6f3-4e1e-cfff-47dc783908a6"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Epoch 1, loss=0.7936\n",
+            "Epoch 2, loss=0.4129\n",
+            "Epoch 3, loss=0.3252\n",
+            "Epoch 4, loss=0.2685\n",
+            "Epoch 5, loss=0.2243\n"
+          ]
+        }
+      ],
+      "source": [
+        "class SVHNCNN(nn.Module):\n",
+        "    def __init__(self):\n",
+        "        super().__init__()\n",
+        "        self.net = nn.Sequential(\n",
+        "            nn.Conv2d(3, 32, 3, padding=1),\n",
+        "            nn.ReLU(),\n",
+        "            nn.MaxPool2d(2),\n",
+        "            nn.Conv2d(32, 64, 3, padding=1),\n",
+        "            nn.ReLU(),\n",
+        "            nn.MaxPool2d(2),\n",
+        "            nn.Flatten(),\n",
+        "            nn.Linear(64 * 8 * 8, 256),\n",
+        "            nn.ReLU(),\n",
+        "            nn.Linear(256, 10)\n",
+        "        )\n",
+        "\n",
+        "    def forward(self, x):\n",
+        "        return self.net(x)\n",
+        "\n",
+        "model = SVHNCNN().to(device)\n",
+        "criterion = nn.CrossEntropyLoss()\n",
+        "optimizer = optim.Adam(model.parameters(), lr=1e-3)\n",
+        "\n",
+        "for epoch in range(5):\n",
+        "    model.train()\n",
+        "    running_loss = 0\n",
+        "    for x, y in trainloader:\n",
+        "        x, y = x.to(device), y.to(device)\n",
+        "        optimizer.zero_grad()\n",
+        "        logits = model(x)\n",
+        "        loss = criterion(logits, y)\n",
+        "        loss.backward()\n",
+        "        optimizer.step()\n",
+        "        running_loss += loss.item()\n",
+        "    print(f\"Epoch {epoch+1}, loss={running_loss/len(trainloader):.4f}\")\n",
+        "\n",
+        "\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 4,
+      "metadata": {
+        "id": "gDjdzONLUbl0"
+      },
+      "outputs": [],
+      "source": [
+        "torch.save(model.state_dict(), \"svhn_cnn.pth\")"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install onnxscript\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "GTnL9HBOhcjy",
+        "outputId": "d7bb5af4-0e6e-4a43-bfec-72c37046e2ed"
+      },
+      "execution_count": 6,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Collecting onnxscript\n",
+            "  Downloading onnxscript-0.6.2-py3-none-any.whl.metadata (13 kB)\n",
+            "Requirement already satisfied: ml_dtypes in /usr/local/lib/python3.12/dist-packages (from onnxscript) (0.5.4)\n",
+            "Requirement already satisfied: numpy in /usr/local/lib/python3.12/dist-packages (from onnxscript) (2.0.2)\n",
+            "Collecting onnx_ir<2,>=0.1.15 (from onnxscript)\n",
+            "  Downloading onnx_ir-0.2.0-py3-none-any.whl.metadata (3.3 kB)\n",
+            "Collecting onnx>=1.17 (from onnxscript)\n",
+            "  Downloading onnx-1.21.0-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (8.5 kB)\n",
+            "Requirement already satisfied: packaging in /usr/local/lib/python3.12/dist-packages (from onnxscript) (26.0)\n",
+            "Requirement already satisfied: typing_extensions>=4.10 in /usr/local/lib/python3.12/dist-packages (from onnxscript) (4.15.0)\n",
+            "Requirement already satisfied: protobuf>=4.25.1 in /usr/local/lib/python3.12/dist-packages (from onnx>=1.17->onnxscript) (5.29.6)\n",
+            "Requirement already satisfied: sympy>=1.13 in /usr/local/lib/python3.12/dist-packages (from onnx_ir<2,>=0.1.15->onnxscript) (1.14.0)\n",
+            "Requirement already satisfied: mpmath<1.4,>=1.1.0 in /usr/local/lib/python3.12/dist-packages (from sympy>=1.13->onnx_ir<2,>=0.1.15->onnxscript) (1.3.0)\n",
+            "Downloading onnxscript-0.6.2-py3-none-any.whl (689 kB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m689.1/689.1 kB\u001b[0m \u001b[31m10.7 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading onnx-1.21.0-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (17.6 MB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m17.6/17.6 MB\u001b[0m \u001b[31m33.1 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hDownloading onnx_ir-0.2.0-py3-none-any.whl (164 kB)\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m164.1/164.1 kB\u001b[0m \u001b[31m12.1 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hInstalling collected packages: onnx, onnx_ir, onnxscript\n",
+            "Successfully installed onnx-1.21.0 onnx_ir-0.2.0 onnxscript-0.6.2\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 7,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "qpukI8DnUbo7",
+        "outputId": "0658e835-9d28-48cf-83fd-612f98d79e3f"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "W0416 23:00:49.309000 39391 torch/onnx/_internal/exporter/_compat.py:125] Setting ONNX exporter to use operator set version 18 because the requested opset_version 11 is a lower version than we have implementations for. Automatic version conversion will be performed, which may not be successful at converting to the requested version. If version conversion is unsuccessful, the opset version of the exported model will be kept at 18. Please consider setting opset_version >=18 to leverage latest ONNX features\n",
+            "W0416 23:00:50.402000 39391 torch/onnx/_internal/exporter/_schemas.py:455] Missing annotation for parameter 'input' from (input, boxes, output_size: 'Sequence[int]', spatial_scale: 'float' = 1.0, sampling_ratio: 'int' = -1, aligned: 'bool' = False). Treating as an Input.\n",
+            "W0416 23:00:50.404000 39391 torch/onnx/_internal/exporter/_schemas.py:455] Missing annotation for parameter 'boxes' from (input, boxes, output_size: 'Sequence[int]', spatial_scale: 'float' = 1.0, sampling_ratio: 'int' = -1, aligned: 'bool' = False). Treating as an Input.\n",
+            "W0416 23:00:50.406000 39391 torch/onnx/_internal/exporter/_schemas.py:455] Missing annotation for parameter 'input' from (input, boxes, output_size: 'Sequence[int]', spatial_scale: 'float' = 1.0). Treating as an Input.\n",
+            "W0416 23:00:50.408000 39391 torch/onnx/_internal/exporter/_schemas.py:455] Missing annotation for parameter 'boxes' from (input, boxes, output_size: 'Sequence[int]', spatial_scale: 'float' = 1.0). Treating as an Input.\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "[torch.onnx] Obtain model graph for `SVHNCNN([...]` with `torch.export.export(..., strict=False)`...\n",
+            "[torch.onnx] Obtain model graph for `SVHNCNN([...]` with `torch.export.export(..., strict=False)`... ✅\n",
+            "[torch.onnx] Run decomposition...\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/lib/python3.12/copyreg.py:99: FutureWarning: `isinstance(treespec, LeafSpec)` is deprecated, use `isinstance(treespec, TreeSpec) and treespec.is_leaf()` instead.\n",
+            "  return cls.__new__(cls, *args)\n",
+            "WARNING:onnxscript.version_converter:The model version conversion is not supported by the onnxscript version converter and fallback is enabled. The model will be converted using the onnx C API (target version: 11).\n",
+            "WARNING:onnxscript.version_converter:Failed to convert the model to the target version 11 using the ONNX C API. The model was not modified\n",
+            "Traceback (most recent call last):\n",
+            "  File \"/usr/local/lib/python3.12/dist-packages/onnxscript/version_converter/__init__.py\", line 120, in call\n",
+            "    converted_proto = _c_api_utils.call_onnx_api(\n",
+            "                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n",
+            "  File \"/usr/local/lib/python3.12/dist-packages/onnxscript/version_converter/_c_api_utils.py\", line 65, in call_onnx_api\n",
+            "    result = func(proto)\n",
+            "             ^^^^^^^^^^^\n",
+            "  File \"/usr/local/lib/python3.12/dist-packages/onnxscript/version_converter/__init__.py\", line 115, in _partial_convert_version\n",
+            "    return onnx.version_converter.convert_version(\n",
+            "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n",
+            "  File \"/usr/local/lib/python3.12/dist-packages/onnx/version_converter.py\", line 39, in convert_version\n",
+            "    converted_model_str = C.convert_version(model_str, target_version)\n",
+            "                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n",
+            "RuntimeError: /github/workspace/onnx/version_converter/BaseConverter.h:67: adapter_lookup: Assertion `false` failed: No Adapter From Version $14 for Relu\n"
+          ]
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "[torch.onnx] Run decomposition... ✅\n",
+            "[torch.onnx] Translate the graph into ONNX...\n",
+            "[torch.onnx] Translate the graph into ONNX... ✅\n"
+          ]
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "ONNXProgram(\n",
+              "    model=\n",
+              "        <\n",
+              "            ir_version=10,\n",
+              "            opset_imports={'': 18},\n",
+              "            producer_name='pytorch',\n",
+              "            producer_version='2.10.0+cpu',\n",
+              "            domain=None,\n",
+              "            model_version=None,\n",
+              "        >\n",
+              "        graph(\n",
+              "            name=main_graph,\n",
+              "            inputs=(\n",
+              "                %\"input\"<FLOAT,[1,3,32,32]>\n",
+              "            ),\n",
+              "            outputs=(\n",
+              "                %\"logits\"<FLOAT,[1,10]>\n",
+              "            ),\n",
+              "            initializers=(\n",
+              "                %\"net.0.weight\"<FLOAT,[32,3,3,3]>{TorchTensor(...)},\n",
+              "                %\"net.0.bias\"<FLOAT,[32]>{TorchTensor(...)},\n",
+              "                %\"net.3.bias\"<FLOAT,[64]>{TorchTensor(...)},\n",
+              "                %\"net.7.bias\"<FLOAT,[256]>{TorchTensor(...)},\n",
+              "                %\"net.9.bias\"<FLOAT,[10]>{TorchTensor<FLOAT,[10]>(Parameter containing: tensor([-0.0610, -0.0648,  0.0636, -0.0256, -0.0430,  0.0758, -0.0166, -0.0259, 0.0616, -0.0069], requires_grad=True), name='net.9.bias')},\n",
+              "                %\"net.3.weight\"<FLOAT,[64,32,3,3]>{TorchTensor(...)},\n",
+              "                %\"net.7.weight\"<FLOAT,[256,4096]>{TorchTensor(...)},\n",
+              "                %\"net.9.weight\"<FLOAT,[10,256]>{TorchTensor(...)},\n",
+              "                %\"val_5\"<INT64,[2]>{Tensor<INT64,[2]>(array([   1, 4096]), name='val_5')}\n",
+              "            ),\n",
+              "        ) {\n",
+              "             0 |  # node_conv2d\n",
+              "                  %\"conv2d\"<FLOAT,[1,32,32,32]> ⬅️ ::Conv(%\"input\", %\"net.0.weight\"{...}, %\"net.0.bias\"{...}) {group=1, pads=(1, 1, 1, 1), auto_pad='NOTSET', strides=(1, 1), dilations=(1, 1)}\n",
+              "             1 |  # node_relu\n",
+              "                  %\"relu\"<FLOAT,[1,32,32,32]> ⬅️ ::Relu(%\"conv2d\")\n",
+              "             2 |  # node_max_pool2d\n",
+              "                  %\"max_pool2d\"<FLOAT,[1,32,16,16]> ⬅️ ::MaxPool(%\"relu\") {storage_order=0, dilations=(1, 1), ceil_mode=0, pads=(0, 0, 0, 0), auto_pad='NOTSET', strides=(2, 2), kernel_shape=(2, 2)}\n",
+              "             3 |  # node_conv2d_1\n",
+              "                  %\"conv2d_1\"<FLOAT,[1,64,16,16]> ⬅️ ::Conv(%\"max_pool2d\", %\"net.3.weight\"{...}, %\"net.3.bias\"{...}) {group=1, pads=(1, 1, 1, 1), auto_pad='NOTSET', strides=(1, 1), dilations=(1, 1)}\n",
+              "             4 |  # node_relu_1\n",
+              "                  %\"relu_1\"<FLOAT,[1,64,16,16]> ⬅️ ::Relu(%\"conv2d_1\")\n",
+              "             5 |  # node_max_pool2d_1\n",
+              "                  %\"max_pool2d_1\"<FLOAT,[1,64,8,8]> ⬅️ ::MaxPool(%\"relu_1\") {storage_order=0, dilations=(1, 1), ceil_mode=0, pads=(0, 0, 0, 0), auto_pad='NOTSET', strides=(2, 2), kernel_shape=(2, 2)}\n",
+              "             6 |  # node_view\n",
+              "                  %\"view\"<FLOAT,[1,4096]> ⬅️ ::Reshape(%\"max_pool2d_1\", %\"val_5\"{[1, 4096]}) {allowzero=1}\n",
+              "             7 |  # node_linear\n",
+              "                  %\"linear\"<FLOAT,[1,256]> ⬅️ ::Gemm(%\"view\", %\"net.7.weight\"{...}, %\"net.7.bias\"{...}) {beta=1.0, transB=1, alpha=1.0, transA=0}\n",
+              "             8 |  # node_relu_2\n",
+              "                  %\"relu_2\"<FLOAT,[1,256]> ⬅️ ::Relu(%\"linear\")\n",
+              "             9 |  # node_linear_1\n",
+              "                  %\"logits\"<FLOAT,[1,10]> ⬅️ ::Gemm(%\"relu_2\", %\"net.9.weight\"{...}, %\"net.9.bias\"{[-0.06103097274899483, -0.06475172191858292, 0.06358533352613449, -0.025621309876441956, -0.04296775162220001, 0.07580724358558655, -0.016588186845183372, -0.02589663490653038, 0.06161364167928696, -0.006898627150803804]}) {beta=1.0, transB=1, alpha=1.0, transA=0}\n",
+              "            return %\"logits\"<FLOAT,[1,10]>\n",
+              "        }\n",
+              "\n",
+              "\n",
+              "    ,\n",
+              "    exported_program=\n",
+              "        ExportedProgram:\n",
+              "            class GraphModule(torch.nn.Module):\n",
+              "                def forward(self, p_net_0_weight: \"f32[32, 3, 3, 3]\", p_net_0_bias: \"f32[32]\", p_net_3_weight: \"f32[64, 32, 3, 3]\", p_net_3_bias: \"f32[64]\", p_net_7_weight: \"f32[256, 4096]\", p_net_7_bias: \"f32[256]\", p_net_9_weight: \"f32[10, 256]\", p_net_9_bias: \"f32[10]\", x: \"f32[1, 3, 32, 32]\"):\n",
+              "                    # File: /usr/local/lib/python3.12/dist-packages/torch/nn/modules/conv.py:553 in forward, code: return self._conv_forward(input, self.weight, self.bias)\n",
+              "                    conv2d: \"f32[1, 32, 32, 32]\" = torch.ops.aten.conv2d.default(x, p_net_0_weight, p_net_0_bias, [1, 1], [1, 1]);  x = p_net_0_weight = p_net_0_bias = None\n",
+              "            \n",
+              "                    # File: /usr/local/lib/python3.12/dist-packages/torch/nn/modules/activation.py:143 in forward, code: return F.relu(input, inplace=self.inplace)\n",
+              "                    relu: \"f32[1, 32, 32, 32]\" = torch.ops.aten.relu.default(conv2d);  conv2d = None\n",
+              "            \n",
+              "                    # File: /usr/local/lib/python3.12/dist-packages/torch/nn/modules/pooling.py:224 in forward, code: return F.max_pool2d(\n",
+              "                    max_pool2d: \"f32[1, 32, 16, 16]\" = torch.ops.aten.max_pool2d.default(relu, [2, 2], [2, 2]);  relu = None\n",
+              "            \n",
+              "                    # File: /usr/local/lib/python3.12/dist-packages/torch/nn/modules/conv.py:553 in forward, code: return self._conv_forward(input, self.weight, self.bias)\n",
+              "                    conv2d_1: \"f32[1, 64, 16, 16]\" = torch.ops.aten.conv2d.default(max_pool2d, p_net_3_weight, p_net_3_bias, [1, 1], [1, 1]);  max_pool2d = p_net_3_weight = p_net_3_bias = None\n",
+              "            \n",
+              "                    # File: /usr/local/lib/python3.12/dist-packages/torch/nn/modules/activation.py:143 in forward, code: return F.relu(input, inplace=self.inplace)\n",
+              "                    relu_1: \"f32[1, 64, 16, 16]\" = torch.ops.aten.relu.default(conv2d_1);  conv2d_1 = None\n",
+              "            \n",
+              "                    # File: /usr/local/lib/python3.12/dist-packages/torch/nn/modules/pooling.py:224 in forward, code: return F.max_pool2d(\n",
+              "                    max_pool2d_1: \"f32[1, 64, 8, 8]\" = torch.ops.aten.max_pool2d.default(relu_1, [2, 2], [2, 2]);  relu_1 = None\n",
+              "            \n",
+              "                    # File: /usr/local/lib/python3.12/dist-packages/torch/nn/modules/flatten.py:55 in forward, code: return input.flatten(self.start_dim, self.end_dim)\n",
+              "                    view: \"f32[1, 4096]\" = torch.ops.aten.view.default(max_pool2d_1, [1, 4096]);  max_pool2d_1 = None\n",
+              "            \n",
+              "                    # File: /usr/local/lib/python3.12/dist-packages/torch/nn/modules/linear.py:134 in forward, code: return F.linear(input, self.weight, self.bias)\n",
+              "                    linear: \"f32[1, 256]\" = torch.ops.aten.linear.default(view, p_net_7_weight, p_net_7_bias);  view = p_net_7_weight = p_net_7_bias = None\n",
+              "            \n",
+              "                    # File: /usr/local/lib/python3.12/dist-packages/torch/nn/modules/activation.py:143 in forward, code: return F.relu(input, inplace=self.inplace)\n",
+              "                    relu_2: \"f32[1, 256]\" = torch.ops.aten.relu.default(linear);  linear = None\n",
+              "            \n",
+              "                    # File: /usr/local/lib/python3.12/dist-packages/torch/nn/modules/linear.py:134 in forward, code: return F.linear(input, self.weight, self.bias)\n",
+              "                    linear_1: \"f32[1, 10]\" = torch.ops.aten.linear.default(relu_2, p_net_9_weight, p_net_9_bias);  relu_2 = p_net_9_weight = p_net_9_bias = None\n",
+              "                    return (linear_1,)\n",
+              "            \n",
+              "        Graph signature: \n",
+              "            # inputs\n",
+              "            p_net_0_weight: PARAMETER target='net.0.weight'\n",
+              "            p_net_0_bias: PARAMETER target='net.0.bias'\n",
+              "            p_net_3_weight: PARAMETER target='net.3.weight'\n",
+              "            p_net_3_bias: PARAMETER target='net.3.bias'\n",
+              "            p_net_7_weight: PARAMETER target='net.7.weight'\n",
+              "            p_net_7_bias: PARAMETER target='net.7.bias'\n",
+              "            p_net_9_weight: PARAMETER target='net.9.weight'\n",
+              "            p_net_9_bias: PARAMETER target='net.9.bias'\n",
+              "            x: USER_INPUT\n",
+              "    \n",
+              "            # outputs\n",
+              "            linear_1: USER_OUTPUT\n",
+              "    \n",
+              "        Range constraints: {}\n",
+              "\n",
+              ")"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 7
+        }
+      ],
+      "source": [
+        "import torch\n",
+        "import torch.nn as nn\n",
+        "\n",
+        "device = torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")\n",
+        "\n",
+        "model = SVHNCNN().to(device)\n",
+        "model.load_state_dict(torch.load(\"svhn_cnn.pth\", map_location=device))\n",
+        "model.eval()\n",
+        "\n",
+        "dummy = torch.randn(1, 3, 32, 32).to(device)  # SVHN is 32x32 RGB\n",
+        "\n",
+        "torch.onnx.export(\n",
+        "    model,\n",
+        "    dummy,\n",
+        "    \"svhn_cnn.onnx\",\n",
+        "    input_names=[\"input\"],\n",
+        "    output_names=[\"logits\"],\n",
+        "    opset_version=11\n",
+        ")"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "background_save": true
+        },
+        "id": "CSfjyE_GUbsQ"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "background_save": true
+        },
+        "id": "iB3ZemPwUbvu"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "background_save": true
+        },
+        "id": "1VsJmjo7UbzV"
+      },
+      "outputs": [],
+      "source": []
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "colab": {
+          "background_save": true
+        },
+        "id": "VRabhXWgUb2n"
+      },
+      "outputs": [],
+      "source": []
+    }
+  ],
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "display_name": "Python 3",
+      "name": "python3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 0
+}

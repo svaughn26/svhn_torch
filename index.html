@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>SVHN Digit Classifier</title>
+</head>
+<body>
+  <h1>SVHN Digit Classifier</h1>
+  <input type="file" id="imageInput" accept="image/*">
+  <button id="predictBtn">Predict</button>
+  <p id="result"></p>
+
+  <canvas id="canvas" width="32" height="32" style="display:none;"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
