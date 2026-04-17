@@ -1,18 +1,131 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>SVHN Digit Classifier</title>
-</head>
-<body>
-  <h1>SVHN Digit Classifier</h1>
-  <input type="file" id="imageInput" accept="image/*">
-  <button id="predictBtn">Predict</button>
-  <p id="result"></p>
-
-  <canvas id="canvas" width="32" height="32" style="display:none;"></canvas>
-
-  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
-  <script src="app.js"></script>
-</body>
-</html>
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "code",
+      "source": [
+        "%%writefile index.html\n",
+        "<!DOCTYPE html>\n",
+        "<html>\n",
+        "<head>\n",
+        "  <meta charset=\"UTF-8\">\n",
+        "  <title>SVHN Digit Classifier</title>\n",
+        "</head>\n",
+        "<body>\n",
+        "  <h1>SVHN Digit Classifier</h1>\n",
+        "  <input type=\"file\" id=\"imageInput\" accept=\"image/*\">\n",
+        "  <button id=\"predictBtn\">Predict</button>\n",
+        "  <p id=\"result\"></p>\n",
+        "\n",
+        "  <canvas id=\"canvas\" width=\"32\" height=\"32\" style=\"display:none;\"></canvas>\n",
+        "\n",
+        "  <script src=\"https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js\"></script>\n",
+        "  <script src=\"app.js\"></script>\n",
+        "</body>\n",
+        "</html>\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "KRbCzogPinpH",
+        "outputId": "c6c19e6c-a3e0-461c-b9e0-57e5c5663d6c"
+      },
+      "execution_count": 14,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Overwriting index.html\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!ls -l\n",
+        "\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "0nGWf3llkBQO",
+        "outputId": "53891eab-71d7-4f2c-ee2f-dca7e011e726"
+      },
+      "execution_count": 15,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "total 12\n",
+            "-rw-r--r-- 1 root root   31 Apr 16 23:45 app.js\n",
+            "-rw-r--r-- 1 root root  477 Apr 17 00:21 index.html\n",
+            "drwxr-xr-x 1 root root 4096 Apr  2 13:31 sample_data\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "zd1W_Sb1in1Z"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "xokox91_in4D"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "KKUKWIINin6d"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "fSUtCht8in9Y"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "_boqlUaTin_3"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
