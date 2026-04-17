@@ -8,7 +8,7 @@ async function loadModel() {
 async function runInference(session, imageData) {
   const tensor = new ort.Tensor("float32", imageData, [1, 3, 32, 32]);
   const results = await session.run({ input: tensor });
-  const output = results.output.data;
+  const output = results.logits.data;
   const predictedDigit = output.indexOf(Math.max(...output));
   return predictedDigit;
 }
