@@ -1,7 +1,7 @@
 <h2 style="font-family:Arial;">SVHN Digit Classifier (PyTorch + ONNX)</h2>
 
 
-**Overview**\n
+**Overview**
 
 This project is a digit classification model trained on the SVHN (Street View House Numbers) dataset using PyTorch. The goal is to recognize digits (0–9) from real‑world images captured from house numbers. The project includes:
 
@@ -15,12 +15,12 @@ A clean HTML interface for testing predictions
 
 This project demonstrates skills in deep learning, model deployment, and web integration.
 
-**Live Demo**\n
+**Live Demo**
 You can test the model directly in your browser:
 
 👉 Live Website: https://svaughn26.github.io/svhn_torch/
 
-**Technologies Used**\n
+**Technologies Used**
 PyTorch — model training and architecture
 
 ONNX — model export for cross‑platform inference
@@ -31,7 +31,7 @@ HTML/CSS — simple UI for testing predictions
 
 SVHN Dataset — real‑world digit images
 
-**Model Architecture**\n
+**Model Architecture**
 The classifier uses a Convolutional Neural Network (CNN) with:
 
 Two convolutional layers
@@ -46,7 +46,7 @@ Output logits for 10 digit classes
 
 The ONNX file (svhn_cnn.onnx) contains the exported version of the trained model.
 
-**Project Structure**\n
+**Project Structure**
 Code
 svhn_torch/
 │── app.js               # JavaScript inference logic
@@ -67,7 +67,7 @@ No server required.
 3. Test predictions
 Upload digit images or use the provided UI to run inference through the ONNX model.
 
-*What I Learned*\n
+*What I Learned*
 How to build and train CNNs using PyTorch
 
 How to export models to ONNX for deployment
@@ -78,7 +78,7 @@ How to connect deep learning models with simple web interfaces
 
 How to work with real‑world datasets like SVHN
 
-**Future Improvements**\n
+**Future Improvements**
 Add full training script
 
 Add preprocessing examples
